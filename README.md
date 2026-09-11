@@ -108,7 +108,7 @@ Remove any X-Ray lines you manually added to `~/.config/hypr/bindings.lua`, then
 - **No focused window:** focus a normal Hyprland client or pass a PID explicitly.
 - **Permission denied:** X-Ray will not elevate; some descriptors, logs, and disk health remain unavailable.
 - **Missing disk/image detail:** install the relevant optional utility yourself, then refresh.
-- **Vision offset on a transformed output:** disable with `xray vision`; fractional scaling/output transforms are a known v0.9 limitation.
+- **Vision on multiple/transformed outputs:** disable with `xray vision`; v0.9 is validated on one `eDP-1` output. Multiple outputs can mirror cards, and fractional scaling/output transforms can offset them.
 - **Shell issue after editing:** run `omarchy restart shell`; X-Ray does not alter upstream Omarchy files.
 
 Compatibility details and inspected upstream paths are recorded in [docs/UPSTREAM_COMPATIBILITY.md](docs/UPSTREAM_COMPATIBILITY.md). Contributions must preserve the local-first security model described in [CONTRIBUTING.md](CONTRIBUTING.md).
