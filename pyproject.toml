@@ -1,0 +1,14 @@
+[project]
+name = "omarchy-xray"
+version = "0.9.0"
+description = "Local-first Linux inspection engine for the Omarchy X-Ray plugin"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "S"]
+ignore = ["S603", "S607"]

@@ -1,0 +1,10 @@
+#!/bin/sh
+set -eu
+
+bin_path=${XDG_BIN_HOME:-"$HOME/.local/bin"}/xray
+if [ -L "$bin_path" ]; then
+  rm -- "$bin_path"
+  printf 'Removed %s\n' "$bin_path"
+else
+  printf 'No X-Ray CLI symlink found at %s\n' "$bin_path"
+fi

@@ -1,0 +1,8 @@
+#!/bin/sh
+set -eu
+
+plugin_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+bin_dir=${XDG_BIN_HOME:-"$HOME/.local/bin"}
+mkdir -p "$bin_dir"
+ln -sfn "$plugin_root/bin/xray" "$bin_dir/xray"
+printf 'Installed xray CLI: %s/xray -> %s/bin/xray\n' "$bin_dir" "$plugin_root"

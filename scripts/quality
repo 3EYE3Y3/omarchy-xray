@@ -1,0 +1,31 @@
+#!/bin/sh
+set -eu
+
+root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+cd "$root"
+
+python3 -m compileall -q xraylib bin/xray
+python3 -m unittest discover -s tests -v
+
+if command -v ruff >/dev/null 2>&1; then
+  ruff format --check .
+  ruff check .
+else
+  printf '%s\n' 'ruff: OPTIONAL MISSING (Python compile check completed)'
+fi
+
+if command -v shellcheck >/dev/null 2>&1; then
+  shellcheck xray scripts/*
+else
+  printf '%s\n' 'shellcheck: OPTIONAL MISSING'
+fi
+
+if command -v qmllint >/dev/null 2>&1; then
+  qmllint -I /usr/share/omarchy/shell XRay.qml
+else
+  printf '%s\n' 'qmllint: OPTIONAL MISSING'
+fi
+
+omarchy plugin validate .
+jq -e '.schemaVersion == 1 and .id == "io.github.3eye3y3.xray" and (.kinds | index("overlay"))' manifest.json >/dev/null
+git diff --check
