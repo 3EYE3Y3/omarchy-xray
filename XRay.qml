@@ -21,6 +21,7 @@ Item {
   property string typeText: "SYSTEM"
   property var activeTarget: []
   property var report: ({})
+  property var visionRows: []
   property var sectionNames: []
   property string selectedSection: "overview"
   property string fontFamily: Style.font.family
@@ -156,13 +157,12 @@ Item {
   }
 
   ListModel { id: detailModel }
-  ListModel { id: visionModel }
 
   IpcHandler {
     target: "io.github.3eye3y3.xray"
     function status(): string {
       return JSON.stringify({ opened: root.opened, vision: root.vision, hud: root.hud,
-                              hudPid: root.hudPid, windows: visionModel.count })
+                              hudPid: root.hudPid, windows: root.visionRows.length })
     }
     function vision(): void { root.open(JSON.stringify({ mode: "vision", target: [] })) }
     function hide(): void { root.close() }
@@ -183,12 +183,10 @@ Item {
     id: visionProcess
     stdout: StdioCollector { id: visionOut; waitForEnd: true }
     onExited: function(exitCode) {
-      visionModel.clear()
       try {
         var data = JSON.parse(visionOut.text || "{}")
-        var windows = data.windows || []
-        for (var i = 0; i < windows.length; i++) visionModel.append(windows[i])
-      } catch (error) { }
+        root.visionRows = data.windows || []
+      } catch (error) { root.visionRows = [] }
     }
   }
 
@@ -388,7 +386,7 @@ Item {
         Text {
           id: visionStatus
           anchors.centerIn: parent
-          text: root.vision ? "X-RAY VISION · " + visionModel.count + " WINDOWS" : "X-RAY HUD · PID " + root.hudPid
+          text: root.vision ? "X-RAY VISION · " + root.visionRows.length + " WINDOWS" : "X-RAY HUD · PID " + root.hudPid
           color: root.accent
           font.family: root.fontFamily
           font.pixelSize: Style.font.caption
@@ -397,22 +395,16 @@ Item {
       }
 
       Repeater {
-        model: visionModel
+        model: root.visionRows
         delegate: Rectangle {
-          required property int pid
-          required property string application
-          required property string title
-          required property var at
-          required property var size
-          required property string memory
-          required property string threads
+          required property var modelData
           // Hyprland connector names and Qt screen identities can differ on
           // some builds. Geometry is already normalized per monitor by the
           // probe, so do not hide valid rows on a brittle string comparison.
-          visible: root.vision || pid === root.hudPid
-          x: Math.max(8, at[0] + 12)
-          y: Math.max(8, at[1] + 12)
-          width: Math.min(Style.space(310), Math.max(Style.space(190), size[0] - 24))
+          visible: root.vision || Number(modelData.pid) === root.hudPid
+          x: Math.max(8, modelData.at[0] + 12)
+          y: Math.max(8, modelData.at[1] + 12)
+          width: Math.min(Style.space(310), Math.max(Style.space(190), modelData.size[0] - 24))
           height: Style.space(86)
           radius: Style.cornerRadius / 2
           color: root.background
@@ -423,9 +415,9 @@ Item {
             anchors.fill: parent
             anchors.margins: Style.spacing.sm
             spacing: Style.space(3)
-            Text { width: parent.width; text: application.toUpperCase(); color: root.accent; font.family: root.fontFamily; font.pixelSize: Style.font.caption; font.bold: true; elide: Text.ElideRight }
-            Text { width: parent.width; text: title; color: root.foreground; font.family: root.fontFamily; font.pixelSize: Style.font.bodySmall; elide: Text.ElideRight }
-            Text { width: parent.width; text: "PID " + pid + "   RAM " + memory + "   THREADS " + threads; color: root.muted; font.family: root.fontFamily; font.pixelSize: Style.font.caption; elide: Text.ElideRight }
+            Text { width: parent.width; text: String(modelData.application || "window").toUpperCase(); color: root.accent; font.family: root.fontFamily; font.pixelSize: Style.font.caption; font.bold: true; elide: Text.ElideRight }
+            Text { width: parent.width; text: String(modelData.title || ""); color: root.foreground; font.family: root.fontFamily; font.pixelSize: Style.font.bodySmall; elide: Text.ElideRight }
+            Text { width: parent.width; text: "PID " + modelData.pid + "   RAM " + modelData.memory + "   THREADS " + modelData.threads; color: root.muted; font.family: root.fontFamily; font.pixelSize: Style.font.caption; elide: Text.ElideRight }
           }
         }
       }
