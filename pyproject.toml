@@ -1,6 +1,6 @@
 [project]
 name = "omarchy-xray"
-version = "0.9.0"
+version = "0.9.1"
 description = "Local-first Linux inspection engine for the Omarchy X-Ray plugin"
 requires-python = ">=3.11"
 license = { text = "MIT" }
