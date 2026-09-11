@@ -3,9 +3,9 @@ from __future__ import annotations
 import os
 import unittest
 
-from xraylib.resolver import ResolutionError, TargetResolver
-
 from conftest import FakeRunner
+
+from xraylib.resolver import ResolutionError, TargetResolver
 
 
 class ResolverTests(unittest.TestCase):
@@ -22,19 +22,32 @@ class ResolverTests(unittest.TestCase):
             TargetResolver(FakeRunner()).resolve(["too", "many", "parts"])
 
     def test_ambiguous_name(self) -> None:
-        runner = FakeRunner({"pgrep": (0, "44\n", ""), "systemctl": (0, "loaded\n", ""), "pacman": (0, "firefox 1.0\n", "")})
+        runner = FakeRunner(
+            {
+                "pgrep": (0, "44\n", ""),
+                "systemctl": (0, "loaded\n", ""),
+                "pacman": (0, "firefox 1.0\n", ""),
+            }
+        )
         target = TargetResolver(runner).resolve(["firefox"])
         self.assertEqual(target.type, "ambiguous")
-        self.assertEqual({choice["type"] for choice in target.metadata["choices"]}, {"process", "service", "package"})
+        self.assertEqual(
+            {choice["type"] for choice in target.metadata["choices"]},
+            {"process", "service", "package"},
+        )
 
     def test_no_focused_hyprland_window(self) -> None:
         with self.assertRaisesRegex(ResolutionError, "No focused"):
             TargetResolver(FakeRunner({"hyprctl": (0, "{}", "")})).resolve([])
 
     def test_focused_window(self) -> None:
-        runner = FakeRunner({"hyprctl": (0, '{"pid":42,"title":"Odd \\\"Title\\\"","class":"term"}', "")})
+        runner = FakeRunner(
+            {"hyprctl": (0, '{"pid":42,"title":"Odd \\"Title\\"","class":"term"}', "")}
+        )
         target = TargetResolver(runner).resolve([])
-        self.assertEqual((target.type, target.identifier, target.display_name), ("window", "42", 'Odd "Title"'))
+        self.assertEqual(
+            (target.type, target.identifier, target.display_name), ("window", "42", 'Odd "Title"')
+        )
 
     def test_invalid_ips(self) -> None:
         for value in ("999.2.3.4", "not an ip", "1.2.3"):

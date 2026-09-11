@@ -16,8 +16,12 @@ class InterfaceProbe(Probe):
         base = Path("/sys/class/net") / name
         if not base.exists():
             return {"error": f"Network interface does not exist: {name}"}
-        addresses, address_result = self.runner.json(["ip", "-json", "address", "show", "dev", name], timeout=2)
-        routes, route_result = self.runner.json(["ip", "-json", "route", "show", "dev", name], timeout=2)
+        addresses, address_result = self.runner.json(
+            ["ip", "-json", "address", "show", "dev", name], timeout=2
+        )
+        routes, route_result = self.runner.json(
+            ["ip", "-json", "route", "show", "dev", name], timeout=2
+        )
         wireless: dict[str, Any] = {}
         if self.runner.available("iw"):
             iw = self.runner.run(["iw", "dev", name, "link"], timeout=2)
@@ -30,8 +34,12 @@ class InterfaceProbe(Probe):
                 "mac": read_text(str(base / "address"), limit=128).strip(),
                 "mtu": read_text(str(base / "mtu"), limit=128).strip(),
                 "link_type": read_text(str(base / "type"), limit=128).strip(),
-                "rx_bytes": int(read_text(str(base / "statistics/rx_bytes"), limit=128).strip() or 0),
-                "tx_bytes": int(read_text(str(base / "statistics/tx_bytes"), limit=128).strip() or 0),
+                "rx_bytes": int(
+                    read_text(str(base / "statistics/rx_bytes"), limit=128).strip() or 0
+                ),
+                "tx_bytes": int(
+                    read_text(str(base / "statistics/tx_bytes"), limit=128).strip() or 0
+                ),
             },
             "addresses": addresses if isinstance(addresses, list) else [],
             "routes": routes if isinstance(routes, list) else [],

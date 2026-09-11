@@ -5,10 +5,10 @@ import unittest
 import zipfile
 from pathlib import Path
 
+from conftest import FakeRunner
+
 from xraylib.models import Target
 from xraylib.probes.file import FileProbe
-
-from conftest import FakeRunner
 
 
 def probe(path: Path) -> dict:
@@ -44,7 +44,14 @@ class FileTests(unittest.TestCase):
             self.assertFalse((root.parent / "escape.txt").exists())
 
     def test_executable_inspection(self) -> None:
-        runner = FakeRunner({"file": (0, "application/x-executable\n", ""), "readelf": (0, "ELF64\ninterpreter /lib/ld.so\n", ""), "ldd": (0, "libc.so.6\n", ""), "pacman": (0, "/usr/bin/sh is owned by bash\n", "")})
+        runner = FakeRunner(
+            {
+                "file": (0, "application/x-executable\n", ""),
+                "readelf": (0, "ELF64\ninterpreter /lib/ld.so\n", ""),
+                "ldd": (0, "libc.so.6\n", ""),
+                "pacman": (0, "/usr/bin/sh is owned by bash\n", ""),
+            }
+        )
         report = FileProbe(runner).collect(Target("file", "/usr/bin/bash", "bash"))
         self.assertIn("executable", report)
         self.assertTrue(report["overview"]["sha256"])

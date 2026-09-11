@@ -7,7 +7,11 @@ from xraylib.runner import CommandResult
 
 
 class FakeRunner:
-    def __init__(self, responses: dict[str, tuple[int, str, str]] | None = None, available: set[str] | None = None) -> None:
+    def __init__(
+        self,
+        responses: dict[str, tuple[int, str, str]] | None = None,
+        available: set[str] | None = None,
+    ) -> None:
         self.responses = responses or {}
         self.available_tools = available if available is not None else set(self.responses)
         self.calls: list[list[str]] = []

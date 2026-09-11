@@ -6,7 +6,8 @@ import pwd
 import queue
 import socket
 import threading
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 
 def read_text(path: str, *, limit: int = 256_000) -> str:
@@ -43,10 +44,14 @@ def human_bytes(value: int | float | None) -> str:
 
 
 def iso_time(timestamp: float) -> str:
-    return dt.datetime.fromtimestamp(timestamp, tz=dt.timezone.utc).astimezone().isoformat(timespec="seconds")
+    return (
+        dt.datetime.fromtimestamp(timestamp, tz=dt.UTC).astimezone().isoformat(timespec="seconds")
+    )
 
 
-def call_with_timeout(function: Callable[..., Any], *args: Any, timeout: float = 2.0) -> tuple[Any, bool]:
+def call_with_timeout(
+    function: Callable[..., Any], *args: Any, timeout: float = 2.0
+) -> tuple[Any, bool]:
     """Run a potentially blocking libc resolver call in a daemon thread."""
     output: queue.Queue[tuple[bool, Any]] = queue.Queue(maxsize=1)
 

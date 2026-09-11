@@ -6,7 +6,11 @@ from typing import Any
 
 def text_report(data: dict[str, Any]) -> str:
     target = data.get("target", {})
-    lines = [f"X-RAY · {target.get('display_name', 'Unknown')}", f"TYPE  {str(target.get('type', '')).upper()}", ""]
+    lines = [
+        f"X-RAY · {target.get('display_name', 'Unknown')}",
+        f"TYPE  {str(target.get('type', '')).upper()}",
+        "",
+    ]
 
     def emit(value: Any, depth: int = 0, limit: int = 80) -> None:
         indent = "  " * depth

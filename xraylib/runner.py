@@ -27,9 +27,13 @@ class Runner:
     def available(self, command: str) -> bool:
         return shutil.which(command) is not None
 
-    def run(self, argv: list[str], *, timeout: float = 3.0, max_output: int = 1_000_000) -> CommandResult:
+    def run(
+        self, argv: list[str], *, timeout: float = 3.0, max_output: int = 1_000_000
+    ) -> CommandResult:
         if not argv or not self.available(argv[0]):
-            return CommandResult(argv, 127, "", f"{argv[0] if argv else 'command'} is not installed")
+            return CommandResult(
+                argv, 127, "", f"{argv[0] if argv else 'command'} is not installed"
+            )
         try:
             environment = os.environ.copy()
             environment.update({"LANG": "C", "LC_ALL": "C", "PATH": "/usr/local/bin:/usr/bin:/bin"})
@@ -42,10 +46,20 @@ class Runner:
                 check=False,
                 env=environment,
             )
-            return CommandResult(argv, proc.returncode, proc.stdout[:max_output], proc.stderr[:max_output])
+            return CommandResult(
+                argv, proc.returncode, proc.stdout[:max_output], proc.stderr[:max_output]
+            )
         except subprocess.TimeoutExpired as exc:
-            stdout = exc.stdout.decode(errors="replace") if isinstance(exc.stdout, bytes) else (exc.stdout or "")
-            stderr = exc.stderr.decode(errors="replace") if isinstance(exc.stderr, bytes) else (exc.stderr or "")
+            stdout = (
+                exc.stdout.decode(errors="replace")
+                if isinstance(exc.stdout, bytes)
+                else (exc.stdout or "")
+            )
+            stderr = (
+                exc.stderr.decode(errors="replace")
+                if isinstance(exc.stderr, bytes)
+                else (exc.stderr or "")
+            )
             return CommandResult(argv, 124, stdout[:max_output], stderr[:max_output], True)
         except OSError as exc:
             return CommandResult(argv, 126, "", str(exc))

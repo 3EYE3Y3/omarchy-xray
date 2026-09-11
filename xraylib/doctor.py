@@ -5,8 +5,31 @@ from typing import Any
 
 from .runner import Runner
 
-REQUIRED = ["python3", "omarchy", "omarchy-shell", "hyprctl", "ss", "systemctl", "journalctl", "ip", "lsblk", "pacman", "file"]
-OPTIONAL = ["lsof", "smartctl", "nvme", "exiftool", "identify", "readelf", "ldd", "tracepath", "iw", "whois"]
+REQUIRED = [
+    "python3",
+    "omarchy",
+    "omarchy-shell",
+    "hyprctl",
+    "ss",
+    "systemctl",
+    "journalctl",
+    "ip",
+    "lsblk",
+    "pacman",
+    "file",
+]
+OPTIONAL = [
+    "lsof",
+    "smartctl",
+    "nvme",
+    "exiftool",
+    "identify",
+    "readelf",
+    "ldd",
+    "tracepath",
+    "iw",
+    "whois",
+]
 
 
 def diagnose(runner: Runner | None = None) -> dict[str, Any]:
@@ -16,7 +39,10 @@ def diagnose(runner: Runner | None = None) -> dict[str, Any]:
     tools = {name: command_runner.available(name) for name in REQUIRED + OPTIONAL}
     omarchy_ok = version.ok
     hyprland_ok = command_runner.run(["hyprctl", "version"], timeout=2).ok
-    plugin_enabled = "io.github.3eye3y3.xray" in plugin_list.stdout and '"enabled":true' in plugin_list.stdout.replace(" ", "")
+    plugin_enabled = (
+        "io.github.3eye3y3.xray" in plugin_list.stdout
+        and '"enabled":true' in plugin_list.stdout.replace(" ", "")
+    )
     capabilities = {
         "Window inspection": hyprland_ok and tools["python3"],
         "Process inspection": os.path.isdir("/proc"),
@@ -30,7 +56,11 @@ def diagnose(runner: Runner | None = None) -> dict[str, Any]:
         "X-Ray Vision": hyprland_ok and plugin_enabled,
     }
     return {
-        "omarchy": {"detected": omarchy_ok, "version": version.stdout.strip(), "plugin_api": "manifest schema 1"},
+        "omarchy": {
+            "detected": omarchy_ok,
+            "version": version.stdout.strip(),
+            "plugin_api": "manifest schema 1",
+        },
         "hyprland": hyprland_ok,
         "proc": os.path.isdir("/proc"),
         "sys": os.path.isdir("/sys"),
@@ -45,18 +75,27 @@ def diagnose(runner: Runner | None = None) -> dict[str, Any]:
 def format_doctor(report: dict[str, Any]) -> str:
     lines = ["X-RAY DOCTOR", ""]
     checks = [
-        (report["omarchy"]["detected"], f"Omarchy detected ({report['omarchy']['version'] or 'unknown'})"),
+        (
+            report["omarchy"]["detected"],
+            f"Omarchy detected ({report['omarchy']['version'] or 'unknown'})",
+        ),
         (report["omarchy"]["detected"], "Omarchy plugin API compatible (schema 1)"),
         (report["hyprland"], "Hyprland detected"),
         (report["proc"], "/proc available"),
         (report["sys"], "/sys available"),
     ]
-    checks.extend((available, f"{name} available") for name, available in report["tools"].items() if name in REQUIRED)
+    checks.extend(
+        (available, f"{name} available")
+        for name, available in report["tools"].items()
+        if name in REQUIRED
+    )
     for available, label in checks:
         lines.append(f"{'✓' if available else '✗'} {label}")
     for name in OPTIONAL:
         available = report["tools"][name]
-        lines.append(f"{'✓' if available else '○'} {name} {'available' if available else 'OPTIONAL MISSING'}")
+        lines.append(
+            f"{'✓' if available else '○'} {name} {'available' if available else 'OPTIONAL MISSING'}"
+        )
     lines.append("")
     width = max(len(name) for name in report["capabilities"])
     for name, ready in report["capabilities"].items():

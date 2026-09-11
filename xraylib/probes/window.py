@@ -15,8 +15,12 @@ class WindowProbe(Probe):
         if not window:
             clients, completed = self.runner.json(["hyprctl", "clients", "-j"], timeout=1.5)
             if completed.ok and isinstance(clients, list):
-                window = next((row for row in clients if str(row.get("pid")) == target.identifier), {})
-        process = ProcessProbe(self.runner).collect(Target("process", target.identifier, target.display_name))
+                window = next(
+                    (row for row in clients if str(row.get("pid")) == target.identifier), {}
+                )
+        process = ProcessProbe(self.runner).collect(
+            Target("process", target.identifier, target.display_name)
+        )
         return {
             "window": {
                 "application": window.get("class", ""),

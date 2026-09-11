@@ -10,6 +10,9 @@ python3 -m unittest discover -s tests -v
 if command -v ruff >/dev/null 2>&1; then
   ruff format --check .
   ruff check .
+elif command -v uv >/dev/null 2>&1; then
+  uvx ruff format --check .
+  uvx ruff check .
 else
   printf '%s\n' 'ruff: OPTIONAL MISSING (Python compile check completed)'
 fi
@@ -17,7 +20,8 @@ fi
 if command -v shellcheck >/dev/null 2>&1; then
   shellcheck xray scripts/*
 else
-  printf '%s\n' 'shellcheck: OPTIONAL MISSING'
+  sh -n xray scripts/install-cli scripts/uninstall-cli scripts/quality
+  printf '%s\n' 'shellcheck: OPTIONAL MISSING (POSIX shell syntax passed)'
 fi
 
 if command -v qmllint >/dev/null 2>&1; then

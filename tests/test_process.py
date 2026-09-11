@@ -5,10 +5,10 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from conftest import FakeRunner
+
 from xraylib.models import Target
 from xraylib.probes.process import ProcessProbe, parse_ss, process_tree
-
-from conftest import FakeRunner
 
 
 class ProcessTests(unittest.TestCase):
@@ -29,7 +29,11 @@ class ProcessTests(unittest.TestCase):
     def test_process_tree(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            for pid, name, ppid in [("1", "init", 0), ("2", "child with spaces", 1), ("3", "odd)name", 2)]:
+            for pid, name, ppid in [
+                ("1", "init", 0),
+                ("2", "child with spaces", 1),
+                ("3", "odd)name", 2),
+            ]:
                 directory = root / pid
                 directory.mkdir()
                 (directory / "stat").write_text(f"{pid} ({name}) S {ppid} 0 0 0 0 0 0\n")

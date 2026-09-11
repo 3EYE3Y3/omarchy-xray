@@ -9,7 +9,9 @@ from urllib.parse import urlparse
 from .models import Target
 from .runner import Runner
 
-DOMAIN_RE = re.compile(r"^(?=.{1,253}$)(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,63}\.?$")
+DOMAIN_RE = re.compile(
+    r"^(?=.{1,253}$)(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,63}\.?$"
+)
 
 
 class ResolutionError(ValueError):
@@ -33,7 +35,17 @@ class TargetResolver:
         kind = args[0].lower()
         if kind in {"system", "disk"} and len(args) == 1:
             return Target(kind, kind, kind.title())
-        if kind in {"process", "port", "file", "service", "package", "domain", "ip", "interface", "window"}:
+        if kind in {
+            "process",
+            "port",
+            "file",
+            "service",
+            "package",
+            "domain",
+            "ip",
+            "interface",
+            "window",
+        }:
             if len(args) != 2:
                 raise ResolutionError(f"{kind} requires exactly one target")
             return self._explicit(kind, args[1])
@@ -112,11 +124,18 @@ class TargetResolver:
             found = self.runner.run(["pgrep", "-x", value], timeout=1)
             if found.ok and found.stdout.strip():
                 pid = found.stdout.splitlines()[0].strip()
-                choices.append({"type": "process", "identifier": pid, "display_name": f"{value} (PID {pid})"})
+                choices.append(
+                    {"type": "process", "identifier": pid, "display_name": f"{value} (PID {pid})"}
+                )
         if only == "":
-            service = self.runner.run(["systemctl", "show", f"{value}.service", "--property=LoadState", "--value"], timeout=1)
+            service = self.runner.run(
+                ["systemctl", "show", f"{value}.service", "--property=LoadState", "--value"],
+                timeout=1,
+            )
             if service.ok and service.stdout.strip() not in {"", "not-found"}:
-                choices.append({"type": "service", "identifier": value, "display_name": f"{value}.service"})
+                choices.append(
+                    {"type": "service", "identifier": value, "display_name": f"{value}.service"}
+                )
             package = self.runner.run(["pacman", "-Q", value], timeout=1)
             if package.ok:
                 choices.append({"type": "package", "identifier": value, "display_name": value})

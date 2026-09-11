@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from ..models import Target
-from ..util import human_bytes, read_link, read_text, username
+from ..util import read_link, read_text, username
 from .base import Probe
 
 
@@ -59,7 +59,9 @@ def parse_ss(raw: str, pid: int | None = None) -> list[dict[str, Any]]:
     return rows
 
 
-def process_tree(*, root_pid: int | None = None, proc_root: str = "/proc", limit: int = 1000) -> dict[str, Any]:
+def process_tree(
+    *, root_pid: int | None = None, proc_root: str = "/proc", limit: int = 1000
+) -> dict[str, Any]:
     processes: dict[int, dict[str, Any]] = {}
     truncated = False
     try:
@@ -72,13 +74,23 @@ def process_tree(*, root_pid: int | None = None, proc_root: str = "/proc", limit
         if not match:
             continue
         pid = int(match.group(1))
-        processes[pid] = {"pid": pid, "name": match.group(2), "state": match.group(3), "ppid": int(match.group(4)), "children": []}
+        processes[pid] = {
+            "pid": pid,
+            "name": match.group(2),
+            "state": match.group(3),
+            "ppid": int(match.group(4)),
+            "children": [],
+        }
     truncated = len(entries) > limit
     for row in processes.values():
         parent = processes.get(row["ppid"])
         if parent:
             parent["children"].append(row)
-    roots = [processes[root_pid]] if root_pid in processes else [row for row in processes.values() if row["ppid"] not in processes]
+    roots = (
+        [processes[root_pid]]
+        if root_pid in processes
+        else [row for row in processes.values() if row["ppid"] not in processes]
+    )
     return {"roots": roots, "count": len(processes), "truncated": truncated, "limit": limit}
 
 
@@ -114,6 +126,8 @@ class ProcessProbe(Probe):
         package = self.runner.run(["pacman", "-Qo", exe], timeout=2) if exe else None
         fd_rows, fd_error = self._fds(base)
         cgroup = read_text(str(base / "cgroup"), limit=32_000).strip()
+        telemetry = self.runner.run(["ps", "-p", str(pid), "-o", "%cpu=,%mem=,etimes="], timeout=2)
+        telemetry_fields = telemetry.stdout.split()
         return {
             "overview": {
                 "pid": pid,
@@ -130,9 +144,22 @@ class ProcessProbe(Probe):
                 "threads": int(status.get("Threads", "0")),
                 "rss": status.get("VmRSS", ""),
                 "virtual_memory": status.get("VmSize", ""),
+                "cpu_percent": float(telemetry_fields[0]) if len(telemetry_fields) >= 1 else None,
+                "memory_percent": float(telemetry_fields[1])
+                if len(telemetry_fields) >= 2
+                else None,
             },
-            "network": {"connections": parse_ss(sockets.stdout, pid), "source": sockets.argv, "error": sockets.stderr if not sockets.ok else ""},
-            "files": {"descriptors": fd_rows, "count": len(fd_rows), "error": fd_error, "source": f"/proc/{pid}/fd"},
+            "network": {
+                "connections": parse_ss(sockets.stdout, pid),
+                "source": sockets.argv,
+                "error": sockets.stderr if not sockets.ok else "",
+            },
+            "files": {
+                "descriptors": fd_rows,
+                "count": len(fd_rows),
+                "error": fd_error,
+                "source": f"/proc/{pid}/fd",
+            },
             "tree": process_tree(root_pid=pid),
             "associations": {
                 "cgroup": cgroup,
