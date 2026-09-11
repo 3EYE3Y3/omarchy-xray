@@ -1,0 +1,68 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+PLUGIN_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PLUGIN_ROOT))
+
+from xraylib.doctor import diagnose, format_doctor  # noqa: E402
+from xraylib.engine import Engine, vision_snapshot  # noqa: E402
+from xraylib.formatting import json_report, text_report  # noqa: E402
+from xraylib.resolver import ResolutionError  # noqa: E402
+
+
+def summon(payload: dict[str, object]) -> int:
+    completed = subprocess.run(
+        ["omarchy-shell", "shell", "summon", "io.github.3eye3y3.xray", json.dumps(payload)],
+        capture_output=True, text=True, check=False, timeout=3,
+    )
+    if completed.returncode != 0 or completed.stdout.strip() not in {"", "ok"}:
+        reason = completed.stderr.strip() or completed.stdout.strip() or "Omarchy shell did not accept the request"
+        print(f"xray: {reason}", file=sys.stderr)
+        print("Hint: install and enable the plugin, or use --text/--json.", file=sys.stderr)
+        return 1
+    return 0
+
+
+def parser() -> argparse.ArgumentParser:
+    output = argparse.ArgumentParser(prog="xray", description="See what your computer is actually doing.")
+    output.add_argument("target", nargs="*", help="target, or an explicit type followed by a target")
+    output.add_argument("--json", action="store_true", help="print structured JSON instead of opening the UI")
+    output.add_argument("--text", action="store_true", help="print a terminal report instead of opening the UI")
+    output.add_argument("--version", action="version", version="xray 0.9.0")
+    output.add_argument("--vision-json", action="store_true", help=argparse.SUPPRESS)
+    return output
+
+
+def main() -> int:
+    args = parser().parse_args()
+    if args.vision_json:
+        print(json.dumps(vision_snapshot(), ensure_ascii=False))
+        return 0
+    if args.target and args.target[0] == "doctor":
+        report = diagnose()
+        print(json_report(report) if args.json else format_doctor(report))
+        return 0 if not report["required_missing"] else 1
+    if args.target and args.target[0] in {"vision", "hud"} and not (args.json or args.text):
+        target = args.target[1:] if len(args.target) > 1 else []
+        return summon({"mode": args.target[0], "target": target})
+    if not (args.json or args.text):
+        return summon({"mode": "inspect", "target": args.target})
+    try:
+        report = Engine().inspect(args.target)
+    except (ResolutionError, ValueError) as exc:
+        error = {"schema_version": 1, "error": str(exc), "target": args.target}
+        print(json_report(error) if args.json else f"xray: {exc}", file=sys.stdout if args.json else sys.stderr)
+        return 2
+    print(json_report(report) if args.json else text_report(report))
+    return 3 if report.get("target", {}).get("type") == "ambiguous" else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
