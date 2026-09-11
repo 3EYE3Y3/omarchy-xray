@@ -56,7 +56,10 @@ Item {
     else open("{}")
   }
 
-  function close() { dismiss() }
+  function close() {
+    opened = false
+    vision = false
+  }
 
   function dismiss() {
     opened = false
@@ -311,13 +314,12 @@ Item {
               clip: true
               spacing: Style.space(3)
               delegate: Rectangle {
-                required property int index
                 required property string label
                 required property string value
                 required property int depth
                 width: ListView.view.width
                 height: Math.max(Style.space(28), valueText.implicitHeight + Style.spacing.sm)
-                color: index % 2 ? Qt.rgba(root.foreground.r, root.foreground.g, root.foreground.b, 0.025) : "transparent"
+                color: "transparent"
                 RowLayout {
                   anchors.fill: parent
                   anchors.leftMargin: Math.min(depth, 5) * Style.spacing.sm
