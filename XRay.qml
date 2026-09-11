@@ -158,6 +158,16 @@ Item {
   ListModel { id: detailModel }
   ListModel { id: visionModel }
 
+  IpcHandler {
+    target: "io.github.3eye3y3.xray"
+    function status(): string {
+      return JSON.stringify({ opened: root.opened, vision: root.vision, hud: root.hud,
+                              hudPid: root.hudPid, windows: visionModel.count })
+    }
+    function vision(): void { root.open(JSON.stringify({ mode: "vision", target: [] })) }
+    function hide(): void { root.close() }
+  }
+
   Process {
     id: dataProcess
     stdout: StdioCollector { id: dataOut; waitForEnd: true }
@@ -364,6 +374,27 @@ Item {
       WlrLayershell.namespace: "omarchy-xray-vision"
       WlrLayershell.layer: WlrLayer.Overlay
       WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+
+      Rectangle {
+        anchors.top: parent.top
+        anchors.right: parent.right
+        anchors.margins: Style.spacing.md
+        width: visionStatus.implicitWidth + Style.spacing.md * 2
+        height: Style.space(32)
+        radius: Style.cornerRadius / 2
+        color: root.background
+        border.width: 1
+        border.color: root.accent
+        Text {
+          id: visionStatus
+          anchors.centerIn: parent
+          text: root.vision ? "X-RAY VISION · " + visionModel.count + " WINDOWS" : "X-RAY HUD · PID " + root.hudPid
+          color: root.accent
+          font.family: root.fontFamily
+          font.pixelSize: Style.font.caption
+          font.bold: true
+        }
+      }
 
       Repeater {
         model: visionModel
