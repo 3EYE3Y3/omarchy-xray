@@ -404,11 +404,12 @@ Item {
           required property string title
           required property var at
           required property var size
-          required property string monitor_name
           required property string memory
           required property string threads
-          visible: visionWindow.screen && monitor_name === visionWindow.screen.name
-                   && (root.vision || pid === root.hudPid)
+          // Hyprland connector names and Qt screen identities can differ on
+          // some builds. Geometry is already normalized per monitor by the
+          // probe, so do not hide valid rows on a brittle string comparison.
+          visible: root.vision || pid === root.hudPid
           x: Math.max(8, at[0] + 12)
           y: Math.max(8, at[1] + 12)
           width: Math.min(Style.space(310), Math.max(Style.space(190), size[0] - 24))
