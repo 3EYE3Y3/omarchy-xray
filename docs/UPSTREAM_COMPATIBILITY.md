@@ -37,6 +37,7 @@ Relevant inspected paths:
 
 - Compatibility is asserted for Omarchy 4.0.x/schema 1. Future manifest schemas or renamed theme tokens require revalidation.
 - The QML UI expects the plugin checkout to contain Python 3.11+ and calls its colocated `bin/xray`; no package install is needed.
-- Vision follows mapped visible Hyprland clients on known monitors. Compositor geometry is authoritative, but unusual output transforms/fractional scaling may cause small overlay offsets.
+- Vision follows mapped visible Hyprland clients and is acceptance-tested on one `eDP-1` output. Qt and Hyprland connector identities did not compare reliably on this build, so the safe fallback avoids dropping windows; on multiple outputs this can mirror cards across outputs. Output transforms and fractional scaling may also cause small offsets.
+- Standalone Qt `qmllint` cannot resolve Omarchy's runtime-injected `qs.Commons` module and reports binding warnings even though it exits successfully. Runtime validation in the actual shell is authoritative for those imports.
 - Plugin code is unsandboxed by Omarchy, as its installer warning states. X-Ray mitigates this with direct argv execution, bounded output, timeouts, and read-only behavior.
 - `SUPER+X` was already assigned to Universal cut, so X-Ray does not claim it.
