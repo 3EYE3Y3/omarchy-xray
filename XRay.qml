@@ -311,6 +311,7 @@ Item {
               clip: true
               spacing: Style.space(3)
               delegate: Rectangle {
+                required property int index
                 required property string label
                 required property string value
                 required property int depth
