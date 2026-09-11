@@ -22,7 +22,7 @@ X-Ray is a keyboard-first diagnostic instrument for Omarchy. It brings windows, 
 | Interface | addresses, routes, link state, counters, optional Wi-Fi details |
 | System | CPU/load, RAM/swap, filesystems, GPU, temperature, top processes, interfaces |
 
-X-Ray Vision temporarily labels visible Hyprland windows with PID, memory, and thread telemetry. It is a clean toggle on the current plugin API and never steals focus. The focused process/window view refreshes live; static probes are collected only when opened or manually refreshed.
+X-Ray Vision temporarily labels visible Hyprland windows with PID, memory, and thread telemetry. It is a clean toggle on the current plugin API and never steals focus. `xray hud <pid>` uses the same window-following surface for one process. The focused process/window view refreshes live; static probes are collected only when opened or manually refreshed.
 
 ## Installation
 
@@ -39,7 +39,7 @@ X-Ray does not overwrite a shortcut. On the inspected system `SUPER+X` is alread
 
 ```lua
 o.bind("SUPER + CTRL + X", "X-Ray focused window", "xray")
-o.bind("SUPER + CTRL + V", "X-Ray Vision", "xray vision")
+o.bind("SUPER + CTRL + SHIFT + X", "X-Ray Vision", "xray vision")
 ```
 
 Check first with `omarchy menu keybindings --print`, then validate changes with `hyprctl reload` and `hyprctl configerrors`.
