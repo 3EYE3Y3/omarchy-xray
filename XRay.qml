@@ -417,7 +417,8 @@ Item {
             spacing: Style.space(3)
             Text { width: parent.width; text: String(modelData.application || "window").toUpperCase(); color: root.accent; font.family: root.fontFamily; font.pixelSize: Style.font.caption; font.bold: true; elide: Text.ElideRight }
             Text { width: parent.width; text: String(modelData.title || ""); color: root.foreground; font.family: root.fontFamily; font.pixelSize: Style.font.bodySmall; elide: Text.ElideRight }
-            Text { width: parent.width; text: "PID " + modelData.pid + "   RAM " + modelData.memory + "   THREADS " + modelData.threads; color: root.muted; font.family: root.fontFamily; font.pixelSize: Style.font.caption; elide: Text.ElideRight }
+            Text { width: parent.width; text: "PID " + modelData.pid + "   CPU " + modelData.cpu_percent + "%   RAM " + modelData.memory; color: root.muted; font.family: root.fontFamily; font.pixelSize: Style.font.caption; elide: Text.ElideRight }
+            Text { width: parent.width; text: "CONNECTIONS " + modelData.connections + "   THREADS " + modelData.threads; color: root.muted; font.family: root.fontFamily; font.pixelSize: Style.font.caption; elide: Text.ElideRight }
           }
         }
       }

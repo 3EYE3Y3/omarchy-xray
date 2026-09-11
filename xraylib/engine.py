@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .models import Target, result
+from .models import result
 from .probes import (
     DiskProbe,
     DomainProbe,
@@ -25,22 +25,36 @@ class Engine:
         self.runner = runner or Runner()
         self.resolver = TargetResolver(self.runner)
         self.probes = [
-            WindowProbe(self.runner), ProcessProbe(self.runner), PortProbe(self.runner), FileProbe(self.runner),
-            DiskProbe(self.runner), ServiceProbe(self.runner), PackageProbe(self.runner), DomainProbe(self.runner),
-            IpProbe(self.runner), InterfaceProbe(self.runner), SystemProbe(self.runner),
+            WindowProbe(self.runner),
+            ProcessProbe(self.runner),
+            PortProbe(self.runner),
+            FileProbe(self.runner),
+            DiskProbe(self.runner),
+            ServiceProbe(self.runner),
+            PackageProbe(self.runner),
+            DomainProbe(self.runner),
+            IpProbe(self.runner),
+            InterfaceProbe(self.runner),
+            SystemProbe(self.runner),
         ]
 
     def inspect(self, args: list[str]) -> dict[str, Any]:
         target = self.resolver.resolve(args)
         if target.type == "ambiguous":
-            return result(target, {"chooser": target.metadata["choices"]}, warnings=["Target is ambiguous; select a type explicitly."])
+            return result(
+                target,
+                {"chooser": target.metadata["choices"]},
+                warnings=["Target is ambiguous; select a type explicitly."],
+            )
         probe = next((candidate for candidate in self.probes if candidate.supports(target)), None)
         if probe is None:
             return result(target, {"error": f"No probe supports {target.type}"})
         sections = probe.collect(target)
         sections["capabilities"] = probe.capabilities()
         sections["actions"] = sections.get("actions", probe.actions())
-        warnings = sections.pop("warnings", []) if isinstance(sections.get("warnings", []), list) else []
+        warnings = (
+            sections.pop("warnings", []) if isinstance(sections.get("warnings", []), list) else []
+        )
         return result(target, sections, warnings=warnings)
 
 
@@ -51,6 +65,23 @@ def vision_snapshot(runner: Runner | None = None) -> dict[str, Any]:
     monitor_map = {row.get("id"): row for row in monitors} if isinstance(monitors, list) else {}
     if not completed.ok or not isinstance(clients, list):
         return {"windows": [], "error": completed.stderr or "Hyprland clients unavailable"}
+    visible_pids = sorted(
+        {
+            int(row.get("pid") or 0)
+            for row in clients
+            if row.get("mapped") and int(row.get("pid") or 0) > 0
+        }
+    )
+    cpu_by_pid: dict[int, str] = {}
+    if visible_pids:
+        ps = command_runner.run(
+            ["ps", "-p", ",".join(map(str, visible_pids)), "-o", "pid=,%cpu="], timeout=1.5
+        )
+        for line in ps.stdout.splitlines():
+            fields = line.split()
+            if len(fields) == 2 and fields[0].isdigit():
+                cpu_by_pid[int(fields[0])] = fields[1]
+    sockets = command_runner.run(["ss", "-H", "-t", "-u", "-n", "-a", "-p"], timeout=1.5)
     windows = []
     for client in clients[:100]:
         if not client.get("mapped") or client.get("hidden") or not client.get("visible", True):
@@ -69,11 +100,17 @@ def vision_snapshot(runner: Runner | None = None) -> dict[str, Any]:
         position = client.get("at", [0, 0])
         windows.append(
             {
-                "pid": pid, "application": client.get("class", ""), "title": client.get("title", ""),
+                "pid": pid,
+                "application": client.get("class", ""),
+                "title": client.get("title", ""),
                 "at": [position[0] - monitor.get("x", 0), position[1] - monitor.get("y", 0)],
-                "size": client.get("size", [0, 0]), "monitor": client.get("monitor", 0),
-                "monitor_name": monitor.get("name", ""), "memory": status.get("VmRSS", "unknown"),
+                "size": client.get("size", [0, 0]),
+                "monitor": client.get("monitor", 0),
+                "monitor_name": monitor.get("name", ""),
+                "memory": status.get("VmRSS", "unknown"),
                 "threads": status.get("Threads", "unknown"),
+                "cpu_percent": cpu_by_pid.get(pid, "unknown"),
+                "connections": sockets.stdout.count(f"pid={pid},"),
             }
         )
     return {"windows": windows, "error": "", "truncated": len(clients) > 100}

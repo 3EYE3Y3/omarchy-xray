@@ -6,7 +6,6 @@ import os
 import stat
 import tarfile
 import zipfile
-from pathlib import Path
 from typing import Any
 
 from ..models import Target
@@ -39,7 +38,9 @@ class FileProbe(Probe):
         file_result = self.runner.run(["file", "--brief", "--mime-type", "--", path], timeout=2)
         if file_result.ok:
             mime = file_result.stdout.strip()
-        digest, digest_error = sha256(path) if stat.S_ISREG(info.st_mode) else ("", "Not a regular file")
+        digest, digest_error = (
+            sha256(path) if stat.S_ISREG(info.st_mode) else ("", "Not a regular file")
+        )
         sections: dict[str, Any] = {
             "overview": {
                 "path": os.path.abspath(path),
@@ -97,11 +98,18 @@ class FileProbe(Probe):
             return False
 
     def _image(self, path: str) -> dict[str, Any]:
-        output: dict[str, Any] = {"privacy_warning": "Image metadata can reveal device, time, and GPS location."}
-        identify = self.runner.run(["identify", "-format", "%m %wx%h %[colorspace]", "--", path], timeout=3)
+        output: dict[str, Any] = {
+            "privacy_warning": "Image metadata can reveal device, time, and GPS location."
+        }
+        identify = self.runner.run(
+            ["identify", "-format", "%m %wx%h %[colorspace]", "--", path], timeout=3
+        )
         if identify.ok:
             output["identity"] = identify.stdout.strip()
-        exif = self.runner.run(["exiftool", "-json", "-GPS*", "-Make", "-Model", "-DateTimeOriginal", "--", path], timeout=3)
+        exif = self.runner.run(
+            ["exiftool", "-json", "-GPS*", "-Make", "-Model", "-DateTimeOriginal", "--", path],
+            timeout=3,
+        )
         if exif.ok:
             output["metadata"] = exif.stdout.strip()
             output["gps_present"] = "GPS" in exif.stdout
@@ -116,7 +124,10 @@ class FileProbe(Probe):
         package = self.runner.run(["pacman", "-Qo", path], timeout=2)
         return {
             "elf_header": header.stdout.strip(),
-            "interpreter": next((line.strip() for line in interpreter.stdout.splitlines() if "interpreter" in line), ""),
+            "interpreter": next(
+                (line.strip() for line in interpreter.stdout.splitlines() if "interpreter" in line),
+                "",
+            ),
             "linked_libraries": libraries.stdout.splitlines()[:200] if libraries.ok else [],
             "package": package.stdout.strip() if package.ok else "",
         }
@@ -126,11 +137,21 @@ class FileProbe(Probe):
             if zipfile.is_zipfile(path):
                 with zipfile.ZipFile(path) as archive:
                     names = archive.namelist()
-                return {"type": "zip", "file_count": len(names), "preview": names[:100], "extracted": False}
+                return {
+                    "type": "zip",
+                    "file_count": len(names),
+                    "preview": names[:100],
+                    "extracted": False,
+                }
             if tarfile.is_tarfile(path):
                 with tarfile.open(path, "r:*") as archive:
                     names = archive.getnames()
-                return {"type": "tar", "file_count": len(names), "preview": names[:100], "extracted": False}
+                return {
+                    "type": "tar",
+                    "file_count": len(names),
+                    "preview": names[:100],
+                    "extracted": False,
+                }
         except (OSError, tarfile.TarError, zipfile.BadZipFile):
             return None
         return None

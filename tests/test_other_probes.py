@@ -4,6 +4,8 @@ import time
 import unittest
 from unittest.mock import patch
 
+from conftest import FakeRunner
+
 from xraylib.models import Target
 from xraylib.probes.disk import DiskProbe
 from xraylib.probes.domain import DomainProbe
@@ -11,8 +13,6 @@ from xraylib.probes.package import PackageProbe
 from xraylib.probes.port import PortProbe, exposure
 from xraylib.probes.service import ServiceProbe
 from xraylib.util import call_with_timeout
-
-from conftest import FakeRunner
 
 
 class OtherProbeTests(unittest.TestCase):
@@ -28,7 +28,9 @@ class OtherProbeTests(unittest.TestCase):
         self.assertFalse(report["actions"][0]["available"])
 
     def test_nonexistent_package(self) -> None:
-        report = PackageProbe(FakeRunner({"pacman": (1, "", "package not found")})).collect(Target("package", "absent", "absent"))
+        report = PackageProbe(FakeRunner({"pacman": (1, "", "package not found")})).collect(
+            Target("package", "absent", "absent")
+        )
         self.assertEqual(report["overview"]["status"], "not installed")
 
     def test_dns_timeout_helper_returns_quickly(self) -> None:
@@ -39,18 +41,28 @@ class OtherProbeTests(unittest.TestCase):
         self.assertLess(time.monotonic() - started, 0.2)
 
     def test_invalid_domain_resolution_is_bounded(self) -> None:
-        with patch("xraylib.probes.domain.resolve_addresses", return_value=([], "timeout")), patch("xraylib.probes.domain.tls_summary", return_value={"available": False, "error": "timeout"}):
-            report = DomainProbe(FakeRunner()).collect(Target("domain", "invalid.example", "invalid.example"))
+        with (
+            patch("xraylib.probes.domain.resolve_addresses", return_value=([], "timeout")),
+            patch(
+                "xraylib.probes.domain.tls_summary",
+                return_value={"available": False, "error": "timeout"},
+            ),
+        ):
+            report = DomainProbe(FakeRunner()).collect(
+                Target("domain", "invalid.example", "invalid.example")
+            )
         self.assertEqual(report["dns"]["error"], "timeout")
         self.assertFalse(report["tls"]["available"])
 
     def test_port_exposure_context(self) -> None:
         self.assertEqual(exposure("127.0.0.1"), "local only")
-        self.assertEqual(exposure("0.0.0.0"), "all IPv4 interfaces")
+        self.assertEqual(exposure("0.0.0.0"), "all IPv4 interfaces")  # noqa: S104
         self.assertEqual(exposure("::"), "potentially all IPv6 interfaces")
 
     def test_port_with_no_connections(self) -> None:
-        report = PortProbe(FakeRunner({"ss": (0, "", "")})).collect(Target("port", "65534", "Port 65534"))
+        report = PortProbe(FakeRunner({"ss": (0, "", "")})).collect(
+            Target("port", "65534", "Port 65534")
+        )
         self.assertFalse(report["overview"]["found"])
 
 

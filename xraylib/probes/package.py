@@ -28,7 +28,11 @@ class PackageProbe(Probe):
             "overview": fields or {"name": name, "status": "not installed"},
             "files": paths,
             "executables": [path for path in paths if path.startswith("/usr/bin/")],
-            "raw": {"source": info.argv, "error": info.stderr.strip() if not info.ok else "", "truncated_files": len(files.stdout.splitlines()) > 5000},
+            "raw": {
+                "source": info.argv,
+                "error": info.stderr.strip() if not info.ok else "",
+                "truncated_files": len(files.stdout.splitlines()) > 5000,
+            },
         }
 
     def capabilities(self) -> list[str]:

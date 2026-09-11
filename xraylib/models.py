@@ -15,7 +15,9 @@ class Target:
         return asdict(self)
 
 
-def result(target: Target, sections: dict[str, Any], *, warnings: list[str] | None = None) -> dict[str, Any]:
+def result(
+    target: Target, sections: dict[str, Any], *, warnings: list[str] | None = None
+) -> dict[str, Any]:
     return {
         "schema_version": 1,
         "target": target.as_dict(),
