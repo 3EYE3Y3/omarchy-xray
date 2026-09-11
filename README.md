@@ -89,6 +89,23 @@ omarchy plugin validate ~/.config/omarchy/plugins/io.github.3eye3y3.xray
 
 The Raw section identifies the underlying local source or argv where useful. Slow DNS, TLS, trace, SMART, and journal operations are bounded by timeouts and run outside the QML render path.
 
+### Structured process API
+
+Process and focused-window JSON keep schema version `1`. The `sections.overview` object includes both the original Linux `/proc` display values and integer byte companions:
+
+```json
+{
+  "rss": "9116 kB",
+  "rss_bytes": 9334784,
+  "virtual_memory": "10676 kB",
+  "virtual_memory_bytes": 10932224
+}
+```
+
+Linux reports these `/proc` values in KiB despite spelling the unit `kB`; X-Ray converts them with `value * 1024`. An unavailable or malformed source value produces `null` for its byte companion while the original field remains unchanged.
+
+Process trees omit the running X-Ray inspector branch by exact PID ancestry. Direct pipeline peers are identified by the exact pipe inode connected to X-Ray's stdin or stdout, but only when that pipe is not inherited or held by the inspected target. When the inspector is in a job-control process group distinct from the inspected root, all members of that group are also omitted as one inspection job. If none of those identities is distinct, X-Ray removes only its known descendant branch and leaves siblings visible. Names such as `python3`, `jq`, and `sh` are never used as filters.
+
 ## Security and privacy
 
 X-Ray is read-only in this acceptance candidate: no sudo, no telemetry, no eval, no arbitrary shell execution, no credential reading, no process environments, no automatic extraction, and no automatic firewall or service changes. External network operations happen only when you explicitly inspect a domain or IP. See [SECURITY.md](SECURITY.md) and [docs/PRIVACY.md](docs/PRIVACY.md).
@@ -113,4 +130,4 @@ Remove any X-Ray lines you manually added to `~/.config/hypr/bindings.lua`, then
 
 Compatibility details and inspected upstream paths are recorded in [docs/UPSTREAM_COMPATIBILITY.md](docs/UPSTREAM_COMPATIBILITY.md). Contributions must preserve the local-first security model described in [CONTRIBUTING.md](CONTRIBUTING.md).
 
-This repository is a v0.9.0 local-acceptance candidate. It has not been submitted to the Omarchy Marketplace.
+This repository is a v0.9.1 local-acceptance candidate. It has not been submitted to the Omarchy Marketplace.

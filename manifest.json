@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "io.github.3eye3y3.xray",
   "name": "X-Ray",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "author": "3EYE3Y3",
   "license": "MIT",
   "description": "See what your computer is actually doing.",

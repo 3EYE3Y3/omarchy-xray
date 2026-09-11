@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.1 - 2026-09-11
+
+- Added integer `rss_bytes` and `virtual_memory_bytes` fields to structured process overviews while preserving the existing human-readable fields and schema version 1.
+- Excluded X-Ray's own process branch and reliably identified pipe/job peers from process trees without filtering by executable name.
+
 ## 0.9.0 - 2026-09-11
 
 - Initial local-acceptance candidate.
