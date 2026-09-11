@@ -12,6 +12,8 @@ Item {
   property var manifest: null
   property bool opened: false
   property bool vision: false
+  property bool hud: false
+  property int hudPid: 0
   property bool loading: false
   property string errorText: ""
   property string queryText: ""
@@ -40,11 +42,22 @@ Item {
     var mode = String(payload.mode || "inspect")
     if (mode === "vision") {
       vision = !vision
-      opened = false
+      hud = false
+      opened = vision
       if (vision) refreshVision()
       return
     }
+    if (mode === "hud") {
+      var requestedPid = payload.target && payload.target.length ? parseInt(payload.target[0], 10) : 0
+      hud = !(hud && hudPid === requestedPid)
+      hudPid = isFinite(requestedPid) ? requestedPid : 0
+      vision = false
+      opened = hud
+      if (hud) refreshVision()
+      return
+    }
     vision = false
+    hud = false
     opened = true
     activeTarget = Array.isArray(payload.target) ? payload.target : []
     inspect(activeTarget)
@@ -59,11 +72,12 @@ Item {
   function close() {
     opened = false
     vision = false
+    hud = false
   }
 
   function dismiss() {
     opened = false
-    if (!vision && shell && typeof shell.hide === "function")
+    if (!vision && !hud && shell && typeof shell.hide === "function")
       shell.hide((manifest && manifest.id) || "io.github.3eye3y3.xray")
   }
 
@@ -136,7 +150,7 @@ Item {
   }
 
   function refreshVision() {
-    if (!vision || visionProcess.running) return
+    if ((!vision && !hud) || visionProcess.running) return
     visionProcess.command = ["python3", scriptPath, "--vision-json"]
     visionProcess.running = true
   }
@@ -171,7 +185,7 @@ Item {
   Timer {
     interval: 1000
     repeat: true
-    running: root.vision
+    running: root.vision || root.hud
     onTriggered: root.refreshVision()
   }
 
@@ -184,7 +198,7 @@ Item {
 
   PanelWindow {
     id: panel
-    visible: root.opened
+    visible: root.opened && !root.vision && !root.hud
     anchors { top: true; bottom: true; left: true; right: true }
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore
@@ -343,7 +357,7 @@ Item {
       id: visionWindow
       required property var modelData
       screen: modelData
-      visible: root.vision
+      visible: root.vision || root.hud
       anchors { top: true; bottom: true; left: true; right: true }
       color: "transparent"
       exclusionMode: ExclusionMode.Ignore
@@ -363,6 +377,7 @@ Item {
           required property string memory
           required property string threads
           visible: visionWindow.screen && monitor_name === visionWindow.screen.name
+                   && (root.vision || pid === root.hudPid)
           x: Math.max(8, at[0] + 12)
           y: Math.max(8, at[1] + 12)
           width: Math.min(Style.space(310), Math.max(Style.space(190), size[0] - 24))
